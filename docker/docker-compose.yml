@@ -1,12 +1,18 @@
 # Supabase Docker Compose Configuration
 version: "3.8"
 
+x-deploy-config: &default-deploy
+  placement:
+    constraints:
+      - node.labels.role==db
+
 services:
   # Supabase Studio - Web-based UI
   studio:
     hostname: studio
     image: supabase/studio
     restart: unless-stopped
+    deploy: *default-deploy
     networks:
       - supabase-net
     healthcheck:
@@ -41,9 +47,8 @@ services:
     restart: unless-stopped
     entrypoint: bash -c 'eval "echo \"$$(cat ~/temp.yml)\"" > ~/kong.yml && /docker-entrypoint.sh kong docker-start'
     deploy:
+      <<: *default-deploy
       replicas: 1
-      placement:
-        constraints: [node.labels.node-type == primary]
     environment:
       KONG_DATABASE: "off"
       KONG_DECLARATIVE_CONFIG: /home/kong/kong.yml
@@ -64,6 +69,7 @@ services:
     networks:
       - supabase-net
     image: supabase/gotrue:v2.151.0
+    deploy: *default-deploy
     healthcheck:
       test:
         [
@@ -115,6 +121,7 @@ services:
       - supabase-net
     image: postgrest/postgrest:v12.0.1
     restart: unless-stopped
+    deploy: *default-deploy
     environment:
       PGRST_DB_URI: postgres://authenticator:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       PGRST_DB_SCHEMAS: ${PGRST_DB_SCHEMAS}
@@ -131,6 +138,7 @@ services:
     networks:
       - supabase-net
     image: supabase/realtime:v2.28.32
+    deploy: *default-deploy
     healthcheck:
       test: ["CMD-SHELL", 'curl -sSfL --head -o /dev/null -H "Authorization: Bearer $$ANON_KEY" http://localhost:4000/api/tenants/realtime-dev/health']
       timeout: 5s
@@ -163,9 +171,7 @@ services:
     networks:
       - supabase-net
     image: supabase/storage-api:v1.0.6
-    deploy:
-      placement:
-        constraints: [node.labels.node-type == primary]
+    deploy: *default-deploy
     healthcheck:
       test: >
         wget --no-verbose --tries=1 --spider http://0.0.0.0:5000/status
@@ -196,9 +202,7 @@ services:
     networks:
       - supabase-net
     image: darthsim/imgproxy:v3.8.0
-    deploy:
-      placement:
-        constraints: [node.labels.node-type == primary]
+    deploy: *default-deploy
     healthcheck:
       test: [ "CMD", "imgproxy", "health" ]
       timeout: 5s
@@ -219,6 +223,7 @@ services:
       - supabase-net
     image: supabase/postgres-meta:v0.80.0
     restart: unless-stopped
+    deploy: *default-deploy
     environment:
       PG_META_PORT: 8080
       PG_META_DB_HOST: ${POSTGRES_HOST}
@@ -232,9 +237,7 @@ services:
     container_name: supabase-edge-functions
     image: supabase/edge-runtime:v1.54.2
     restart: unless-stopped
-    deploy:
-      placement:
-        constraints: [node.labels.node-type == primary]
+    deploy: *default-deploy
     environment:
       JWT_SECRET: ${JWT_SECRET}
       SUPABASE_URL: http://kong:8000
@@ -255,6 +258,7 @@ services:
     networks:
       - supabase-net
     image: supabase/logflare:1.4.0
+    deploy: *default-deploy
     healthcheck:
       test: [ "CMD", "curl", "http://localhost:4000/health" ]
       timeout: 5s
@@ -265,9 +269,9 @@ services:
       LOGFLARE_NODE_HOST: 127.0.0.1
       DB_USERNAME: supabase_admin
       DB_DATABASE: ${POSTGRES_DB}
-      # DB_HOSTNAME: ${POSTGRES_HOST}
-      DB_HOSTNAME: tasks.db   # <-- Mude de ${POSTGRES_HOST} (que é 'db') para 'tasks.db'
-      POSTGRES_BACKEND_URL: postgresql://supabase_admin:${POSTGRES_PASSWORD}@tasks.db:${POSTGRES_PORT}/${POSTGRES_DB} # <-- Altere aqui também
+      DB_HOSTNAME: ${POSTGRES_HOST}
+      #DB_HOSTNAME: tasks.db   # <-- Mude de ${POSTGRES_HOST} (que é 'db') para 'tasks.db'
+      #POSTGRES_BACKEND_URL: postgresql://supabase_admin:${POSTGRES_PASSWORD}@tasks.db:${POSTGRES_PORT}/${POSTGRES_DB} # <-- Altere aqui também
       DB_PORT: ${POSTGRES_PORT}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_SCHEMA: _analytics
@@ -275,7 +279,7 @@ services:
       LOGFLARE_SINGLE_TENANT: "true"
       LOGFLARE_SUPABASE_MODE: "true"
       LOGFLARE_MIN_CLUSTER_SIZE: 1
-      # POSTGRES_BACKEND_URL: postgresql://supabase_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      POSTGRES_BACKEND_URL: postgresql://supabase_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       POSTGRES_BACKEND_SCHEMA: _analytics
       LOGFLARE_FEATURE_FLAG_OVERRIDE: multibackend=true
 
@@ -284,9 +288,7 @@ services:
     container_name: supabase-db
     networks:
       - supabase-net
-    deploy:
-      placement:
-        constraints: [node.labels.node-type == primary]
+    deploy: *default-deploy
     image: supabase/postgres:15.1.1.61
     healthcheck:
       test: pg_isready -U postgres -h localhost
@@ -324,9 +326,7 @@ services:
     hostname: vector
     networks:
       - supabase-net
-    deploy:
-      placement:
-        constraints: [node.labels.node-type == primary]
+    deploy: *default-deploy
     image: timberio/vector:0.28.1-alpine
     healthcheck:
       test: wget --no-verbose --tries=1 --spider http://vector:9001/health || exit 1
