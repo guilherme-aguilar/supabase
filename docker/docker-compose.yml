@@ -265,7 +265,9 @@ services:
       LOGFLARE_NODE_HOST: 127.0.0.1
       DB_USERNAME: supabase_admin
       DB_DATABASE: ${POSTGRES_DB}
-      DB_HOSTNAME: ${POSTGRES_HOST}
+      # DB_HOSTNAME: ${POSTGRES_HOST}
+      DB_HOSTNAME: tasks.db   # <-- Mude de ${POSTGRES_HOST} (que é 'db') para 'tasks.db'
+      POSTGRES_BACKEND_URL: postgresql://supabase_admin:${POSTGRES_PASSWORD}@tasks.db:${POSTGRES_PORT}/${POSTGRES_DB} # <-- Altere aqui também
       DB_PORT: ${POSTGRES_PORT}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_SCHEMA: _analytics
@@ -273,7 +275,7 @@ services:
       LOGFLARE_SINGLE_TENANT: "true"
       LOGFLARE_SUPABASE_MODE: "true"
       LOGFLARE_MIN_CLUSTER_SIZE: 1
-      POSTGRES_BACKEND_URL: postgresql://supabase_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+      # POSTGRES_BACKEND_URL: postgresql://supabase_admin:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
       POSTGRES_BACKEND_SCHEMA: _analytics
       LOGFLARE_FEATURE_FLAG_OVERRIDE: multibackend=true
 
