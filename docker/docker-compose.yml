@@ -37,25 +37,11 @@ services:
     hostname: kong
     networks:
       - supabase-net
-      - traefik-public
     image: kong:2.8.1
     restart: unless-stopped
     entrypoint: bash -c 'eval "echo \"$$(cat ~/temp.yml)\"" > ~/kong.yml && /docker-entrypoint.sh kong docker-start'
     deploy:
       replicas: 1
-      labels:
-        - "traefik.enable=true"
-        - "traefik.constraint-label=traefik-public"
-        - "traefik.docker.network=traefik-public"
-        - "traefik.http.routers.supabase-paill-at.rule=Host(`supabase.paill.at`)"
-        - "traefik.http.routers.supabase-paill-at.entrypoints=http"
-        - "traefik.http.routers.supabase-paill-at.middlewares=https-redirect"
-        - "traefik.http.routers.supabase-paill-at-https.rule=Host(`supabase.paill.at`)"
-        - "traefik.http.routers.supabase-paill-at-https.entrypoints=https"
-        - "traefik.http.routers.supabase-paill-at-https.middlewares=crowdsec@file"
-        - "traefik.http.routers.supabase-paill-at-https.tls=true"
-        - "traefik.http.routers.supabase-paill-at-https.tls.certresolver=le"
-        - "traefik.http.services.supabase-paill-at-https.loadbalancer.server.port=8000"
       placement:
         constraints: [node.labels.node-type == primary]
     environment:
@@ -357,5 +343,3 @@ volumes:
 
 networks:
   supabase-net:
-  traefik-public:
-    external: true
